@@ -330,29 +330,6 @@ flutter drive --target=test_driver/app.dart
 
 ---
 
-## Roadmap Futuro
-
-### Versão 2.0
-- [ ] Sistema de favoritos
-- [ ] Busca avançada com filtros
-- [ ] Modo offline com cache local
-- [ ] Notificações push
-- [ ] Temas personalizáveis
-
-### Versão 2.1
-- [ ] Compartilhamento de personagens
-- [ ] Estatísticas de visualização
-- [ ] Integração com redes sociais
-- [ ] Widgets para tela inicial
-
-### Versão 3.0
-- [ ] Realidade aumentada
-- [ ] Jogos interativos
-- [ ] Chat com IA do Rick
-- [ ] Modo multijogador
-
----
-
 ## Contribuição
 
 Contribuições são sempre bem-vindas! Para contribuir:
