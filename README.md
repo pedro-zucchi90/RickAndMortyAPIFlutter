@@ -213,8 +213,8 @@ class LocationModel {
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/seu-usuario/rickandmorty-api-explorer.git
-cd rickandmorty-api-explorer
+git clone [https://github.com/seu-usuario/rickandmorty-api-explorer.git](https://github.com/pedro-zucchi90/RickAndMortyAPIFlutter.git)
+cd RickAndMortyAPIFlutter
 ```
 
 2. **Instale as dependências**
