@@ -8,12 +8,53 @@ class Characterslist extends StatefulWidget {
 }
 
 class _CharacterslistState extends State<Characterslist> {
-  late Future<List<CharacterModel>> _charactersFuture;
+  List<CharacterModel> _characters = [];
+  int _paginaAtual = 1;
+  bool _carregando = false;
+  bool _temMais = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _charactersFuture = APIService().fetchCharacters();
+    _fetchCharacters();
+  }
+
+  Future<void> _fetchCharacters() async {
+    if (_carregando || !_temMais) return;
+    setState(() {
+      _carregando = true;
+      _error = null;
+    });
+    try {
+      final newCharacters = await APIService().fetchCharacters(page: _paginaAtual);
+      setState(() {
+        if (newCharacters.isEmpty) {
+          _temMais = false;
+        } else {
+          _characters.addAll(newCharacters);
+          _paginaAtual++;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Erro ao carregar personagens';
+      });
+    } finally {
+      setState(() {
+        _carregando = false;
+      });
+    }
+  }
+
+  Future<void> _refreshCharacters() async {
+    setState(() {
+      _characters.clear();
+      _paginaAtual = 1;
+      _temMais = true;
+      _error = null;
+    });
+    await _fetchCharacters();
   }
 
   @override
@@ -22,45 +63,54 @@ class _CharacterslistState extends State<Characterslist> {
       appBar: AppBar(
         title: Text('Lista de Personagens'),
       ),
-      body: FutureBuilder<List<CharacterModel>>(
-        future: _charactersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar personagens'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Nenhum personagem encontrado'));
-          }
-          final characters = snapshot.data!;
-          return ListView.builder(
-            itemCount: characters.length,
-            itemBuilder: (context, index) {
-              final character = characters[index];
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                child: ListTile(
-                  leading: Image.network(
-                    character.image,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
+      body: _error != null
+          ? Center(child: Text(_error!))
+          : _characters.isEmpty && _carregando
+              ? Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _refreshCharacters,
+                  child: ListView.builder(
+                    itemCount: _characters.length + (_temMais ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index < _characters.length) {
+                        final character = _characters[index];
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          child: ListTile(
+                            leading: Image.network(
+                              character.image,
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            ),
+                            title: Text(character.name),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CharacterDetailScreen(character: character),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      } else {
+                        // Botão "Carregar mais"
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: _carregando
+                                ? CircularProgressIndicator()
+                                : ElevatedButton(
+                                    onPressed: _fetchCharacters,
+                                    child: Text('Carregar mais'),
+                                  ),
+                          ),
+                        );
+                      }
+                    },
                   ),
-                  title: Text(character.name),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CharacterDetailScreen(character: character),
-                      ),
-                    );
-                  },
                 ),
-              );
-            },
-          );
-        }
-      ),
     );
   }
 }

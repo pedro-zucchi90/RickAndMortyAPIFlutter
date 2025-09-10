@@ -7,8 +7,8 @@ import 'dart:convert';
 class APIService{
   static const String baseUrl = 'https://rickandmortyapi.com/api/';
 
-  Future<List<CharacterModel>> fetchCharacters() async {
-    final response = await http.get(Uri.parse('${baseUrl}character'));
+  Future<List<CharacterModel>> fetchCharacters({int page = 1}) async {
+    final response = await http.get(Uri.parse('${baseUrl}character?page=$page'));
     if (response.statusCode == 200) {
       final List<dynamic> data = (jsonDecode(response.body)['results']);
       return data.map((item) => CharacterModel(
