@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import '../services/service.dart';
 import '../models/characterModels.dart';
 
-class Characterslist extends StatefulWidget {
+class CharactersList extends StatefulWidget {
   @override
-  _CharacterslistState createState() => _CharacterslistState();
+  _CharactersListState createState() => _CharactersListState();
 }
 
-class _CharacterslistState extends State<Characterslist> {
+class _CharactersListState extends State<CharactersList> {
   List<CharacterModel> _characters = [];
-  int _paginaAtual = 1;
-  bool _carregando = false;
-  bool _temMais = true;
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasMore = true;
   String? _error;
 
   @override
@@ -21,19 +21,19 @@ class _CharacterslistState extends State<Characterslist> {
   }
 
   Future<void> _fetchCharacters() async {
-    if (_carregando || !_temMais) return;
+    if (_isLoading || !_hasMore) return;
     setState(() {
-      _carregando = true;
+      _isLoading = true;
       _error = null;
     });
     try {
-      final newCharacters = await APIService().fetchCharacters(page: _paginaAtual);
+      final newCharacters = await APIService().fetchCharacters(page: _currentPage);
       setState(() {
         if (newCharacters.isEmpty) {
-          _temMais = false;
+          _hasMore = false;
         } else {
           _characters.addAll(newCharacters);
-          _paginaAtual++;
+          _currentPage++;
         }
       });
     } catch (e) {
@@ -42,7 +42,7 @@ class _CharacterslistState extends State<Characterslist> {
       });
     } finally {
       setState(() {
-        _carregando = false;
+        _isLoading = false;
       });
     }
   }
@@ -50,8 +50,8 @@ class _CharacterslistState extends State<Characterslist> {
   Future<void> _refreshCharacters() async {
     setState(() {
       _characters.clear();
-      _paginaAtual = 1;
-      _temMais = true;
+      _currentPage = 1;
+      _hasMore = true;
       _error = null;
     });
     await _fetchCharacters();
@@ -65,12 +65,12 @@ class _CharacterslistState extends State<Characterslist> {
       ),
       body: _error != null
           ? Center(child: Text(_error!))
-          : _characters.isEmpty && _carregando
+          : _characters.isEmpty && _isLoading
               ? Center(child: CircularProgressIndicator())
               : RefreshIndicator(
                   onRefresh: _refreshCharacters,
                   child: ListView.builder(
-                    itemCount: _characters.length + (_temMais ? 1 : 0),
+                    itemCount: _characters.length + (_hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index < _characters.length) {
                         final character = _characters[index];
@@ -99,7 +99,7 @@ class _CharacterslistState extends State<Characterslist> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Center(
-                            child: _carregando
+                            child: _isLoading
                                 ? CircularProgressIndicator()
                                 : ElevatedButton(
                                     onPressed: _fetchCharacters,

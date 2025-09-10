@@ -73,35 +73,35 @@ class LocationDetailScreen extends StatefulWidget {
 }
 
 class _LocationDetailScreenState extends State<LocationDetailScreen> {
-  late Future<List<Map<String, dynamic>>> residentesFuture;
+  late Future<List<Map<String, dynamic>>> residentsFuture;
 
   @override
   void initState() {
     super.initState();
-    residentesFuture = fetchResidentes(widget.location.residents);
+    residentsFuture = fetchResidents(widget.location.residents);
   }
 
-  Future<List<Map<String, dynamic>>> fetchResidentes(List<String> urls) async {
-    List<Map<String, dynamic>> residentes = [];
+  Future<List<Map<String, dynamic>>> fetchResidents(List<String> urls) async {
+    List<Map<String, dynamic>> residents = [];
     for (String url in urls) {
       try {
         final response = await http.get(Uri.parse(url));
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          residentes.add({
+          residents.add({
             'name': data['name'],
             'image': data['image'],
           });
         }
       } catch (e) {
         // Se der erro, adiciona um residente "desconhecido"
-        residentes.add({
+        residents.add({
           'name': 'Desconhecido',
           'image': null,
         });
       }
     }
-    return residentes;
+    return residents;
   }
 
   @override
@@ -146,7 +146,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
             ),
             SizedBox(height: 8),
             FutureBuilder<List<Map<String, dynamic>>>(
-              future: residentesFuture,
+              future: residentsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -155,7 +155,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Text('Nenhum residente encontrado');
                 }
-                final residentes = snapshot.data!;
+                final residents = snapshot.data!;
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -163,17 +163,17 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                     crossAxisCount: 2,
                     childAspectRatio: 1.5,
                   ),
-                  itemCount: residentes.length,
+                  itemCount: residents.length,
                   itemBuilder: (context, index) {
-                    final residente = residentes[index];
+                    final resident = residents[index];
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        residente['image'] != null
+                        resident['image'] != null
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.network(
-                                  residente['image'],
+                                  resident['image'],
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,
@@ -190,7 +190,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                               ),
                         SizedBox(height: 8),
                         Text(
-                          residente['name'] ?? 'Desconhecido',
+                          resident['name'] ?? 'Desconhecido',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                         ),

@@ -63,8 +63,6 @@ class _EpisodesListState extends State<EpisodesList> {
   }
 }
 
-
-
 class EpisodeDetailScreen extends StatefulWidget {
   final EpisodesModel episode;
 
@@ -75,35 +73,35 @@ class EpisodeDetailScreen extends StatefulWidget {
 }
 
 class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
-  late Future<List<Map<String, dynamic>>> personagensFuture;
+  late Future<List<Map<String, dynamic>>> charactersFuture;
 
   @override
   void initState() {
     super.initState();
-    personagensFuture = fetchPersonagens(widget.episode.characters);
+    charactersFuture = fetchCharacters(widget.episode.characters);
   }
 
-  Future<List<Map<String, dynamic>>> fetchPersonagens(List<String> urls) async {
-    List<Map<String, dynamic>> personagens = [];
+  Future<List<Map<String, dynamic>>> fetchCharacters(List<String> urls) async {
+    List<Map<String, dynamic>> characters = [];
     for (String url in urls) {
       try {
         final response = await http.get(Uri.parse(url));
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          personagens.add({
+          characters.add({
             'name': data['name'],
             'image': data['image'],
           });
         }
       } catch (e) {
         // Se der erro, adiciona um personagem "desconhecido"
-        personagens.add({
+        characters.add({
           'name': 'Desconhecido',
           'image': null,
         });
       }
     }
-    return personagens;
+    return characters;
   }
 
   @override
@@ -148,7 +146,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
             ),
             SizedBox(height: 8),
             FutureBuilder<List<Map<String, dynamic>>>(
-              future: personagensFuture,
+              future: charactersFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -157,7 +155,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Text('Nenhum personagem encontrado');
                 }
-                final personagens = snapshot.data!;
+                final characters = snapshot.data!;
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -165,17 +163,17 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
                     crossAxisCount: 2,
                     childAspectRatio: 1.5,
                   ),
-                  itemCount: personagens.length,
+                  itemCount: characters.length,
                   itemBuilder: (context, index) {
-                    final personagem = personagens[index];
+                    final character = characters[index];
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        personagem['image'] != null
+                        character['image'] != null
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.network(
-                                  personagem['image'],
+                                  character['image'],
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,
@@ -192,7 +190,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
                               ),
                         SizedBox(height: 8),
                         Text(
-                          personagem['name'] ?? 'Desconhecido',
+                          character['name'] ?? 'Desconhecido',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                         ),

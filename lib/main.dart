@@ -5,19 +5,19 @@ import 'location/locationList.dart' as location;
 
 void main() {
   runApp(MaterialApp(
-    title: 'Navegação Exemplo',
-    home: TelaInicial(),
+    title: 'Rick and Morty App',
+    home: HomeScreen(),
     )
   );
 }
 
-class TelaInicial extends StatelessWidget {
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: Image.asset('../assets/images/app-icon.png'),
-        title: Text('Tela Inicial'),
+        title: Text('Home Screen'),
       ),
       body: Center(
         child: Column(
@@ -29,7 +29,7 @@ class TelaInicial extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Characterslist()),
+                    MaterialPageRoute(builder: (context) => CharactersList()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -50,7 +50,7 @@ class TelaInicial extends StatelessWidget {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'Personagens',
+                      'Characters',
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.black87,
@@ -89,7 +89,7 @@ class TelaInicial extends StatelessWidget {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'Episódios',
+                      'Episodes',
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.black87,
@@ -128,7 +128,7 @@ class TelaInicial extends StatelessWidget {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'Locais',
+                      'Locations',
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.black87,
@@ -146,12 +146,12 @@ class TelaInicial extends StatelessWidget {
   }
 }
 
-class TelaEpisodios extends StatelessWidget {
+class EpisodesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Segunda Tela'),
+        title: Text('Second Screen'),
       ),
       body: Center(
         child: Text('Bem-vindo à tela de Episodios, betinha'),
@@ -160,12 +160,12 @@ class TelaEpisodios extends StatelessWidget {
   }
 }
 
-class TelaLocais extends StatelessWidget {
+class LocationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Segunda Tela'),
+        title: Text('Second Screen'),
       ),
       body: Center(
         child: Text('Bem-vindo à tela de locais, betinha'),
