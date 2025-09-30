@@ -4,8 +4,9 @@ import '../models/locationModel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+const String baseUrl = 'https://rickandmortyapi.com/api/';
+
 class APIService{
-  static const String baseUrl = 'https://rickandmortyapi.com/api/';
 
   Future<List<CharacterModel>> fetchCharacters({int page = 1}) async {
     final response = await http.get(Uri.parse('${baseUrl}character?page=$page'));
@@ -38,7 +39,6 @@ class APIService{
 }
 
 class EpisodeService{
-  static const String baseUrl = 'https://rickandmortyapi.com/api/';
 
   Future<List<EpisodesModel>> fetchEpisodes() async {
     final response = await http.get(Uri.parse('${baseUrl}episode'));
@@ -60,7 +60,6 @@ class EpisodeService{
 }
 
 class LocationService{
-  static const String baseUrl = 'https://rickandmortyapi.com/api/';
 
   Future<List<LocationModel>> fetchLocations() async {
     final response = await http.get(Uri.parse('${baseUrl}location'));
