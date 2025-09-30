@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/service.dart';
 import '../models/locationModel.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 class LocationList extends StatefulWidget {
   @override
@@ -10,12 +8,53 @@ class LocationList extends StatefulWidget {
 }
 
 class _LocationListState extends State<LocationList> {
-  late Future<List<LocationModel>> locationsFuture;
+  List<LocationModel> _locations = [];
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasMore = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    locationsFuture = LocationService().fetchLocations();
+    _fetchLocations();
+  }
+
+  Future<void> _fetchLocations() async {
+    if (_isLoading || !_hasMore) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final newLocations = await LocationService().fetchLocations();
+      setState(() {
+        if (newLocations.isEmpty) {
+          _hasMore = false;
+        } else {
+          _locations.addAll(newLocations);
+          _currentPage++;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Erro ao carregar locais';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _refreshLocations() async {
+    setState(() {
+      _locations.clear();
+      _currentPage = 1;
+      _hasMore = true;
+      _error = null;
+    });
+    await _fetchLocations();
   }
 
   @override
@@ -24,77 +63,65 @@ class _LocationListState extends State<LocationList> {
       appBar: AppBar(
         title: Text('Lista de Locais'),
       ),
-      body: FutureBuilder<List<LocationModel>>(
-        future: locationsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar locais'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Nenhum local encontrado'));
-          }
-          final locations = snapshot.data!;
-          return ListView.builder(
-            itemCount: locations.length,
-            itemBuilder: (context, index) {
-              final location = locations[index];
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                child: ListTile(
-                  title: Text(location.name),
-                  subtitle: Text('${location.type} - ${location.dimension}'),
-                  trailing: Icon(Icons.arrow_forward_ios),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LocationDetailScreen(location: location),
+      body: RefreshIndicator(
+        onRefresh: _refreshLocations,
+        child: _error != null
+            ? Center(child: Text(_error!))
+            : _locations.isEmpty && _isLoading
+                ? Center(child: CircularProgressIndicator())
+                : _locations.isEmpty
+                    ? Center(child: Text('Nenhum local encontrado'))
+                    : ListView.builder(
+                        itemCount: _locations.length + (_hasMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == _locations.length) {
+                            _fetchLocations();
+                            return Center(child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(),
+                            ));
+                          }
+                          final location = _locations[index];
+                          return Card(
+                            margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                            child: ListTile(
+                              title: Text(location.name),
+                              subtitle: Text('${location.type} - ${location.dimension}'),
+                              trailing: Icon(Icons.arrow_forward_ios),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LocationDetailScreen(location: location),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }
 }
 
-class LocationDetailScreen extends StatefulWidget {
+class LocationDetailScreen extends StatelessWidget {
   final LocationModel location;
 
   const LocationDetailScreen({Key? key, required this.location}) : super(key: key);
-
-  @override
-  _LocationDetailScreenState createState() => _LocationDetailScreenState();
-}
-
-class _LocationDetailScreenState extends State<LocationDetailScreen> {
-  late Future<List<Map<String, dynamic>>> residentsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    residentsFuture = fetchResidents(widget.location.residents);
-  }
 
   Future<List<Map<String, dynamic>>> fetchResidents(List<String> urls) async {
     List<Map<String, dynamic>> residents = [];
     for (String url in urls) {
       try {
-        final response = await http.get(Uri.parse(url));
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
+        final response = await LocationService().fetchResident(url);
+        if (response != null) {
           residents.add({
-            'name': data['name'],
-            'image': data['image'],
+            'name': response['name'],
+            'image': response['image'],
           });
         }
       } catch (e) {
-        // Se der erro, adiciona um residente "desconhecido"
         residents.add({
           'name': 'Desconhecido',
           'image': null,
@@ -106,7 +133,6 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final location = widget.location;
     return Scaffold(
       appBar: AppBar(
         title: Text(location.name),
@@ -146,7 +172,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
             ),
             SizedBox(height: 8),
             FutureBuilder<List<Map<String, dynamic>>>(
-              future: residentsFuture,
+              future: fetchResidents(location.residents),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());

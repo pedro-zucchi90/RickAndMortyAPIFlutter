@@ -1,3 +1,5 @@
+import 'infoModel.dart';
+
 class Origin {
   final String name;
   final String url;
@@ -6,6 +8,13 @@ class Origin {
     required this.name,
     required this.url,
   });
+
+  factory Origin.fromJson(Map<String, dynamic> json) {
+    return Origin(
+      name: json['name'] ?? '',
+      url: json['url'] ?? '',
+    );
+  }
 }
 
 class Location {
@@ -16,6 +25,13 @@ class Location {
     required this.name,
     required this.url,
   });
+
+  factory Location.fromJson(Map<String, dynamic> json) {
+    return Location(
+      name: json['name'] ?? '',
+      url: json['url'] ?? '',
+    );
+  }
 }
 
 class CharacterModel {
@@ -46,6 +62,40 @@ class CharacterModel {
     required this.url,
     required this.created,
   });
+
+  factory CharacterModel.fromJson(Map<String, dynamic> json) {
+    return CharacterModel(
+      id: json['id'],
+      name: json['name'] ?? '',
+      status: json['status'] ?? '',
+      species: json['species'] ?? '',
+      type: json['type'] ?? '',
+      gender: json['gender'] ?? '',
+      origin: Origin.fromJson(json['origin'] ?? {}),
+      location: Location.fromJson(json['location'] ?? {}),
+      image: json['image'] ?? '',
+      episode: List<String>.from(json['episode'] ?? []),
+      url: json['url'] ?? '',
+      created: json['created'] ?? '',
+    );
+  }
 }
 
+class CharacterListModel {
+  final Infomodel infos;
+  final List<CharacterModel> results;
 
+  CharacterListModel({
+    required this.infos,
+    required this.results,
+  });
+
+  factory CharacterListModel.fromJson(Map<String, dynamic> json) {
+    return CharacterListModel(
+      infos: Infomodel.fromJson(json['info']),
+      results: (json['results'] as List<dynamic>)
+          .map((item) => CharacterModel.fromJson(item))
+          .toList(),
+    );
+  }
+}

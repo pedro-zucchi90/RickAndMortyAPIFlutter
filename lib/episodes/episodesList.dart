@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/service.dart';
 import '../models/episodesModel.dart';
+import '../models/infoModel.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -10,12 +11,67 @@ class EpisodesList extends StatefulWidget {
 }
 
 class _EpisodesListState extends State<EpisodesList> {
-  late Future<List<EpisodesModel>> episodesFuture;
+  List<EpisodesModel> _episodes = [];
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasMore = true;
+  String? _error;
+  int _totalPages = 1;
 
   @override
   void initState() {
     super.initState();
-    episodesFuture = EpisodeService().fetchEpisodes();
+    _fetchEpisodes();
+  }
+
+  Future<void> _fetchEpisodes() async {
+    if (_isLoading || !_hasMore) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/episode?page=$_currentPage'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final info = Infomodel.fromJson(data['info']);
+        final List<dynamic> results = data['results'];
+        final novosEpisodios = results.map((item) => EpisodesModel.fromJson(item)).toList();
+
+        setState(() {
+          _episodes.addAll(novosEpisodios.cast<EpisodesModel>());
+          _totalPages = info.pages;
+          if (_currentPage >= _totalPages) {
+            _hasMore = false;
+          } else {
+            _currentPage++;
+          }
+        });
+      } else {
+        setState(() {
+          _error = 'Erro ao carregar episódios';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Erro ao carregar episódios';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _refreshEpisodes() async {
+    setState(() {
+      _episodes.clear();
+      _currentPage = 1;
+      _hasMore = true;
+      _error = null;
+      _totalPages = 1;
+    });
+    await _fetchEpisodes();
   }
 
   @override
@@ -24,40 +80,45 @@ class _EpisodesListState extends State<EpisodesList> {
       appBar: AppBar(
         title: Text('Lista de Episódios'),
       ),
-      body: FutureBuilder<List<EpisodesModel>>(
-        future: episodesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar episódios'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Nenhum episódio encontrado'));
-          }
-          final episodes = snapshot.data!;
-          return ListView.builder(
-            itemCount: episodes.length,
-            itemBuilder: (context, index) {
-              final episode = episodes[index];
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                child: ListTile(
-                  title: Text(episode.name),
-                  subtitle: Text('Temporada: ${episode.episode}'),
-                  trailing: Icon(Icons.arrow_forward_ios),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EpisodeDetailScreen(episode: episode),
+      body: RefreshIndicator(
+        onRefresh: _refreshEpisodes,
+        child: _error != null
+            ? Center(child: Text(_error!))
+            : _episodes.isEmpty && _isLoading
+                ? Center(child: CircularProgressIndicator())
+                : _episodes.isEmpty
+                    ? Center(child: Text('Nenhum episódio encontrado'))
+                    : ListView.builder(
+                        itemCount: _episodes.length + (_hasMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == _episodes.length) {
+                            _fetchEpisodes();
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                          final episode = _episodes[index];
+                          return Card(
+                            margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                            child: ListTile(
+                              title: Text(episode.name),
+                              subtitle: Text('Temporada/Episódio: ${episode.episode}'),
+                              trailing: Icon(Icons.arrow_forward_ios),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EpisodeDetailScreen(episode: episode),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }
@@ -94,7 +155,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
           });
         }
       } catch (e) {
-        // Se der erro, adiciona um personagem "desconhecido"
+        // Se der erro, adiciona um personagem "Desconhecido"
         characters.add({
           'name': 'Desconhecido',
           'image': null,
