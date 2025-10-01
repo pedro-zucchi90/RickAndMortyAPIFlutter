@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/service.dart';
 import '../models/characterModels.dart';
-import '../models/infoModel.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -23,8 +21,6 @@ class _CharactersListState extends State<CharactersList> {
   String _searchQuery = '';
   bool _isSearching = false;
 
-  // Timer para debounce
-  Future<void>? _searchFuture;
 
   @override
   void initState() {
@@ -54,7 +50,6 @@ class _CharactersListState extends State<CharactersList> {
       _error = null;
     });
     try {
-      // Fazendo a requisição manualmente para obter o InfoModel
       final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/character?page=$_currentPage'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -120,7 +115,7 @@ class _CharactersListState extends State<CharactersList> {
       _isLoading = true;
       _error = null;
       _isSearching = true;
-      _hasMore = false; // Não paginar durante busca
+      _hasMore = false;
     });
 
     try {
@@ -222,7 +217,6 @@ class _CharactersListState extends State<CharactersList> {
                                 ),
                               );
                             } else {
-                              // Botão "Carregar mais" (não exibe durante busca)
                               return Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 child: Center(

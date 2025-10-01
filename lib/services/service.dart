@@ -1,7 +1,6 @@
 import '../models/characterModels.dart';
 import '../models/episodesModel.dart';
 import '../models/locationModel.dart';
-import '../models/infoModel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 

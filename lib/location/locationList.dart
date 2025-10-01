@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/service.dart';
 import '../models/locationModel.dart';
-import '../models/infoModel.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/service.dart';
 import '../models/episodesModel.dart';
-import '../models/infoModel.dart';
 
 class EpisodesList extends StatefulWidget {
   @override
@@ -10,7 +9,6 @@ class EpisodesList extends StatefulWidget {
 
 class _EpisodesListState extends State<EpisodesList> {
   final EpisodeService _episodeService = EpisodeService();
-  final APIService _apiService = APIService();
 
   List<EpisodesModel> _episodes = [];
   int _currentPage = 1;
@@ -23,9 +21,6 @@ class _EpisodesListState extends State<EpisodesList> {
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isSearching = false;
-
-  // Timer para debounce (não usado, mas pode ser implementado)
-  Future<void>? _searchFuture;
 
   final ScrollController _scrollController = ScrollController();
 
