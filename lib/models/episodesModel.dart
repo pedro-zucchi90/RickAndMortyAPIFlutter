@@ -44,7 +44,7 @@ class EpisodesInfoModel {
   factory EpisodesInfoModel.fromJson(Map<String, dynamic> json) {
     return EpisodesInfoModel(
       info: Infomodel.fromJson(json['info']),
-      results: (json['results'] as List)
+      results: (json['results'])
           .map((e) => EpisodesModel.fromJson(e))
           .toList(),
     );

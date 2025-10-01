@@ -17,7 +17,6 @@ class _LocationListState extends State<LocationList> {
   bool _hasMore = true;
   String? _error;
 
-  // Variáveis para pesquisa
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isSearching = false;
@@ -52,13 +51,13 @@ class _LocationListState extends State<LocationList> {
       final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/location?page=$_currentPage'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        final info = data['info'] as Map<String, dynamic>;
+        final info = data['info'];
         final List<LocationModel> novasLocais = (data['results'] as List<dynamic>)
-            .map((item) => LocationModel.fromJson(item as Map<String, dynamic>))
+            .map((item) => LocationModel.fromJson(item))
             .toList();
 
         setState(() {
-          _totalPages = info['pages'] ?? 0;
+          _totalPages = info['pages'];
           if (novasLocais.isEmpty) {
             _hasMore = false;
           } else {
@@ -97,7 +96,6 @@ class _LocationListState extends State<LocationList> {
     await _fetchLocations();
   }
 
-  // Função para pesquisar locais
   Future<void> _searchLocations() async {
     final query = _searchController.text.trim();
     if (query.isEmpty) {
@@ -117,15 +115,15 @@ class _LocationListState extends State<LocationList> {
       _isLoading = true;
       _error = null;
       _isSearching = true;
-      _hasMore = false; // Não paginar durante busca
+      _hasMore = false;
     });
 
     try {
       final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/location/?name=$query'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        final List<LocationModel> locaisPesquisados = (data['results'] as List<dynamic>)
-            .map((item) => LocationModel.fromJson(item as Map<String, dynamic>))
+        final List<LocationModel> locaisPesquisados = (data['results'])
+            .map((item) => LocationModel.fromJson(item))
             .toList();
 
         setState(() {
@@ -214,7 +212,6 @@ class _LocationListState extends State<LocationList> {
                                 ),
                               );
                             } else {
-                              // Botão "Carregar mais" (não exibe durante busca)
                               return Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 child: Center(

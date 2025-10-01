@@ -44,7 +44,7 @@ class LocationsInfoModel {
   factory LocationsInfoModel.fromJson(Map<String, dynamic> json) {
     return LocationsInfoModel(
       info: Infomodel.fromJson(json['info']),
-      results: (json['results'] as List)
+      results: (json['results'])
           .map((e) => LocationModel.fromJson(e))
           .toList(),
     );

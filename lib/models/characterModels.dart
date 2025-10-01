@@ -93,7 +93,7 @@ class CharacterListModel {
   factory CharacterListModel.fromJson(Map<String, dynamic> json) {
     return CharacterListModel(
       infos: Infomodel.fromJson(json['info']),
-      results: (json['results'] as List<dynamic>)
+      results: (json['results'])
           .map((item) => CharacterModel.fromJson(item))
           .toList(),
     );

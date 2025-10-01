@@ -51,7 +51,7 @@ class LocationService {
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        return jsonDecode(response.body);
       } else {
         return null;
       }
@@ -66,12 +66,12 @@ extension EpisodeServiceExtension on EpisodeService {
     final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/episode?page=$page'));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final info = data['info'] as Map<String, dynamic>;
+      final info = data['info'];
       final List<dynamic> results = data['results'];
       final episodios = results.map((item) => EpisodesModel.fromJson(item)).toList();
       return {
         'episodes': episodios,
-        'totalPages': info['pages'] ?? 0,
+        'totalPages': info['pages'],
         'info': info,
         'results': results,
       };
@@ -84,7 +84,7 @@ extension EpisodeServiceExtension on EpisodeService {
     final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/episode/?name=$name'));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return (data['results'] as List)
+      return (data['results'])
           .map((item) => EpisodesModel.fromJson(item))
           .toList();
     } else {
@@ -98,7 +98,7 @@ extension APIServiceCharacterExtension on APIService {
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        return jsonDecode(response.body);
       } else {
         return null;
       }
