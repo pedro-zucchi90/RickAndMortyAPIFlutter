@@ -79,18 +79,6 @@ extension EpisodeServiceExtension on EpisodeService {
       throw Exception('Erro ao carregar episódios');
     }
   }
-
-  Future<List<EpisodesModel>> searchEpisodesByName(String name) async {
-    final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/episode/?name=$name'));
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return (data['results'])
-          .map((item) => EpisodesModel.fromJson(item))
-          .toList();
-    } else {
-      throw Exception('Nenhum episódio encontrado');
-    }
-  }
 }
 
 extension APIServiceCharacterExtension on APIService {

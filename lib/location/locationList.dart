@@ -17,28 +17,10 @@ class _LocationListState extends State<LocationList> {
   bool _hasMore = true;
   String? _error;
 
-  TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  bool _isSearching = false;
-
   @override
   void initState() {
     super.initState();
     _fetchLocations();
-    _searchController.addListener(_onSearchChanged);
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _onSearchChanged() {
-    setState(() {
-      _searchQuery = _searchController.text.trim();
-    });
-    _searchLocations();
   }
 
   Future<void> _fetchLocations() async {
@@ -89,63 +71,8 @@ class _LocationListState extends State<LocationList> {
       _hasMore = true;
       _error = null;
       _totalPages = 1;
-      _isSearching = false;
-      _searchQuery = '';
-      _searchController.clear();
     });
     await _fetchLocations();
-  }
-
-  Future<void> _searchLocations() async {
-    final query = _searchController.text.trim();
-    if (query.isEmpty) {
-      setState(() {
-        _locations = [];
-        _currentPage = 1;
-        _hasMore = true;
-        _error = null;
-        _totalPages = 1;
-        _isSearching = false;
-      });
-      await _fetchLocations();
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _isSearching = true;
-      _hasMore = false;
-    });
-
-    try {
-      final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/location/?name=$query'));
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        final List<LocationModel> locaisPesquisados = (data['results'])
-            .map((item) => LocationModel.fromJson(item))
-            .toList();
-
-        setState(() {
-          _locations = locaisPesquisados;
-          _error = null;
-        });
-      } else {
-        setState(() {
-          _locations = [];
-          _error = 'Nenhum local encontrado.';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _locations = [];
-        _error = 'Erro ao pesquisar locais';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   @override
@@ -156,33 +83,7 @@ class _LocationListState extends State<LocationList> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Pesquisar local',
-                hintText: 'Digite o nome do local',
-                prefixIcon: Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          FocusScope.of(context).unfocus();
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                _onSearchChanged();
-              },
-              onSubmitted: (value) {
-                _onSearchChanged();
-              },
-            ),
-          ),
+          // Removido o campo de pesquisa
           Expanded(
             child: _error != null
                 ? Center(child: Text(_error!))
@@ -191,7 +92,7 @@ class _LocationListState extends State<LocationList> {
                     : RefreshIndicator(
                         onRefresh: _refreshLocations,
                         child: ListView.builder(
-                          itemCount: _locations.length + (!_isSearching && _hasMore ? 1 : 0),
+                          itemCount: _locations.length + (_hasMore ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index < _locations.length) {
                               final location = _locations[index];
