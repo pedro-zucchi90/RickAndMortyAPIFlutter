@@ -1,4 +1,4 @@
-package com.example.projeto
+package com.example.RickAndMorty
 
 import io.flutter.embedding.android.FlutterActivity
 

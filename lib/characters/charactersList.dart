@@ -18,10 +18,33 @@ class _CharactersListState extends State<CharactersList> {
   bool _hasMore = true;
   String? _error;
 
+  // Adicionando variáveis para pesquisa
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearching = false;
+
+  // Timer para debounce
+  Future<void>? _searchFuture;
+
   @override
   void initState() {
     super.initState();
     _fetchCharacters();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim();
+    });
+    // Chama a busca a cada caractere digitado
+    _searchCharacters();
   }
 
   Future<void> _fetchCharacters() async {
@@ -35,13 +58,13 @@ class _CharactersListState extends State<CharactersList> {
       final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/character?page=$_currentPage'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        final info = Infomodel.fromJson(data['info']);
+        final info = data['info'] as Map<String, dynamic>;
         final List<CharacterModel> novosPersonagens = (data['results'] as List)
             .map((item) => CharacterModel.fromJson(item))
             .toList();
 
         setState(() {
-          _totalPages = info.pages;
+          _totalPages = info['pages'] ?? 0;
           if (novosPersonagens.isEmpty) {
             _hasMore = false;
           } else {
@@ -77,60 +100,147 @@ class _CharactersListState extends State<CharactersList> {
     await _fetchCharacters();
   }
 
+  // Função para pesquisar personagens
+  Future<void> _searchCharacters() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _characters.clear();
+        _currentPage = 1;
+        _hasMore = true;
+        _error = null;
+        _totalPages = 1;
+        _isSearching = false;
+      });
+      await _fetchCharacters();
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _isSearching = true;
+      _hasMore = false; // Não paginar durante busca
+    });
+
+    try {
+      final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/character/?name=$query'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<CharacterModel> personagensPesquisados = (data['results'] as List)
+            .map((item) => CharacterModel.fromJson(item))
+            .toList();
+
+        setState(() {
+          _characters = personagensPesquisados;
+          _error = null;
+        });
+      } else {
+        setState(() {
+          _characters = [];
+          _error = 'Nenhum personagem encontrado.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _characters = [];
+        _error = 'Erro ao pesquisar personagens';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Lista de Personagens'),
       ),
-      body: _error != null
-          ? Center(child: Text(_error!))
-          : _characters.isEmpty && _isLoading
-              ? Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _refreshCharacters,
-                  child: ListView.builder(
-                    itemCount: _characters.length + (_hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index < _characters.length) {
-                        final personagem = _characters[index];
-                        return Card(
-                          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                          child: ListTile(
-                            leading: Image.network(
-                              personagem.image,
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                            ),
-                            title: Text(personagem.name),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CharacterDetailScreen(character: personagem),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Pesquisar personagem',
+                hintText: 'Digite o nome do personagem',
+                prefixIcon: Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          FocusScope.of(context).unfocus();
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(),
+              ),
+              // Atualiza a cada caractere digitado
+              onChanged: (value) {
+                _onSearchChanged();
+              },
+              onSubmitted: (value) {
+                _onSearchChanged();
+              },
+            ),
+          ),
+          Expanded(
+            child: _error != null
+                ? Center(child: Text(_error!))
+                : _characters.isEmpty && _isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                        onRefresh: _refreshCharacters,
+                        child: ListView.builder(
+                          itemCount: _characters.length + (!_isSearching && _hasMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index < _characters.length) {
+                              final personagem = _characters[index];
+                              return Card(
+                                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                child: ListTile(
+                                  leading: Image.network(
+                                    personagem.image,
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  title: Text(personagem.name),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CharacterDetailScreen(character: personagem),
+                                      ),
+                                    );
+                                  },
                                 ),
                               );
-                            },
-                          ),
-                        );
-                      } else {
-                        // Botão "Carregar mais"
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: _isLoading
-                                ? CircularProgressIndicator()
-                                : ElevatedButton(
-                                    onPressed: _fetchCharacters,
-                                    child: Text('Carregar mais'),
-                                  ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
+                            } else {
+                              // Botão "Carregar mais" (não exibe durante busca)
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: Center(
+                                  child: _isLoading
+                                      ? CircularProgressIndicator()
+                                      : ElevatedButton(
+                                          onPressed: _fetchCharacters,
+                                          child: Text('Carregar mais'),
+                                        ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }

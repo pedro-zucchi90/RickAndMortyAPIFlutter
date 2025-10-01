@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/service.dart';
 import '../models/locationModel.dart';
+import '../models/infoModel.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class LocationList extends StatefulWidget {
   @override
@@ -10,14 +13,34 @@ class LocationList extends StatefulWidget {
 class _LocationListState extends State<LocationList> {
   List<LocationModel> _locations = [];
   int _currentPage = 1;
+  int _totalPages = 1;
   bool _isLoading = false;
   bool _hasMore = true;
   String? _error;
+
+  // Variáveis para pesquisa
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _fetchLocations();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim();
+    });
+    _searchLocations();
   }
 
   Future<void> _fetchLocations() async {
@@ -27,15 +50,29 @@ class _LocationListState extends State<LocationList> {
       _error = null;
     });
     try {
-      final newLocations = await LocationService().fetchLocations();
-      setState(() {
-        if (newLocations.isEmpty) {
-          _hasMore = false;
-        } else {
-          _locations.addAll(newLocations);
-          _currentPage++;
-        }
-      });
+      final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/location?page=$_currentPage'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final info = data['info'] as Map<String, dynamic>;
+        final List<LocationModel> novasLocais = (data['results'] as List<dynamic>)
+            .map((item) => LocationModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+
+        setState(() {
+          _totalPages = info['pages'] ?? 0;
+          if (novasLocais.isEmpty) {
+            _hasMore = false;
+          } else {
+            _locations.addAll(novasLocais);
+            _currentPage++;
+            _hasMore = _currentPage <= _totalPages;
+          }
+        });
+      } else {
+        setState(() {
+          _error = 'Erro ao carregar locais';
+        });
+      }
     } catch (e) {
       setState(() {
         _error = 'Erro ao carregar locais';
@@ -49,12 +86,69 @@ class _LocationListState extends State<LocationList> {
 
   Future<void> _refreshLocations() async {
     setState(() {
-      _locations.clear();
+      _locations = [];
       _currentPage = 1;
       _hasMore = true;
       _error = null;
+      _totalPages = 1;
+      _isSearching = false;
+      _searchQuery = '';
+      _searchController.clear();
     });
     await _fetchLocations();
+  }
+
+  // Função para pesquisar locais
+  Future<void> _searchLocations() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _locations = [];
+        _currentPage = 1;
+        _hasMore = true;
+        _error = null;
+        _totalPages = 1;
+        _isSearching = false;
+      });
+      await _fetchLocations();
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _isSearching = true;
+      _hasMore = false; // Não paginar durante busca
+    });
+
+    try {
+      final response = await http.get(Uri.parse('https://rickandmortyapi.com/api/location/?name=$query'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<LocationModel> locaisPesquisados = (data['results'] as List<dynamic>)
+            .map((item) => LocationModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+
+        setState(() {
+          _locations = locaisPesquisados;
+          _error = null;
+        });
+      } else {
+        setState(() {
+          _locations = [];
+          _error = 'Nenhum local encontrado.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _locations = [];
+        _error = 'Erro ao pesquisar locais';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -63,43 +157,82 @@ class _LocationListState extends State<LocationList> {
       appBar: AppBar(
         title: Text('Lista de Locais'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshLocations,
-        child: _error != null
-            ? Center(child: Text(_error!))
-            : _locations.isEmpty && _isLoading
-                ? Center(child: CircularProgressIndicator())
-                : _locations.isEmpty
-                    ? Center(child: Text('Nenhum local encontrado'))
-                    : ListView.builder(
-                        itemCount: _locations.length + (_hasMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == _locations.length) {
-                            _fetchLocations();
-                            return Center(child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(),
-                            ));
-                          }
-                          final location = _locations[index];
-                          return Card(
-                            margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                            child: ListTile(
-                              title: Text(location.name),
-                              subtitle: Text('${location.type} - ${location.dimension}'),
-                              trailing: Icon(Icons.arrow_forward_ios),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LocationDetailScreen(location: location),
-                                  ),
-                                );
-                              },
-                            ),
-                          );
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Pesquisar local',
+                hintText: 'Digite o nome do local',
+                prefixIcon: Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          FocusScope.of(context).unfocus();
                         },
+                      )
+                    : null,
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                _onSearchChanged();
+              },
+              onSubmitted: (value) {
+                _onSearchChanged();
+              },
+            ),
+          ),
+          Expanded(
+            child: _error != null
+                ? Center(child: Text(_error!))
+                : _locations.isEmpty && _isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                        onRefresh: _refreshLocations,
+                        child: ListView.builder(
+                          itemCount: _locations.length + (!_isSearching && _hasMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index < _locations.length) {
+                              final location = _locations[index];
+                              return Card(
+                                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                child: ListTile(
+                                  title: Text(location.name),
+                                  subtitle: Text('${location.type} - ${location.dimension}'),
+                                  trailing: Icon(Icons.arrow_forward_ios),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LocationDetailScreen(location: location),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            } else {
+                              // Botão "Carregar mais" (não exibe durante busca)
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: Center(
+                                  child: _isLoading
+                                      ? CircularProgressIndicator()
+                                      : ElevatedButton(
+                                          onPressed: _fetchLocations,
+                                          child: Text('Carregar mais'),
+                                        ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
                       ),
+          ),
+        ],
       ),
     );
   }

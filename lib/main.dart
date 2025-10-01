@@ -6,6 +6,7 @@ import 'location/locationList.dart' as location;
 void main() {
   runApp(MaterialApp(
     title: 'Rick and Morty App',
+    debugShowCheckedModeBanner: false,
     home: HomeScreen(),
     )
   );
@@ -16,7 +17,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Image.asset('../assets/images/app-icon.png'),
+        leading: Image.asset('assets/images/app-icon.png'),
         title: Text('Home Screen'),
       ),
       body: Center(
@@ -24,7 +25,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 100.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 40.0),
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -33,7 +34,7 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -44,15 +45,15 @@ class HomeScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'images/characters.png',
-                      width: 160,
-                      height: 160,
+                      'assets/images/characters.png',
+                      width: 150,
+                      height: 150,
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: 8),
                     Text(
                       'Characters',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         color: Colors.black87,
                         fontWeight: FontWeight.bold,
                       ),
@@ -62,7 +63,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 100.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 40.0),
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -72,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                   );  
                 },
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -83,15 +84,15 @@ class HomeScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'images/episodes.png',
-                      width: 160,
-                      height: 160,
+                      'assets/images/episodes.png',
+                      width: 150,
+                      height: 150,
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: 8),
                     Text(
                       'Episodes',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         color: Colors.black87,
                         fontWeight: FontWeight.bold,
                       ),
@@ -101,7 +102,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 100.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 40.0),
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -111,7 +112,7 @@ class HomeScreen extends StatelessWidget {
                   );  
                 },
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -122,15 +123,15 @@ class HomeScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'images/locations.png',
-                      width: 160,
-                      height: 160,
+                      'assets/images/locations.png',
+                      width: 150,
+                      height: 150,
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: 8),
                     Text(
                       'Locations',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         color: Colors.black87,
                         fontWeight: FontWeight.bold,
                       ),
@@ -141,34 +142,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class EpisodesScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Second Screen'),
-      ),
-      body: Center(
-        child: Text('Bem-vindo à tela de Episodios, betinha'),
-      ),
-    );
-  }
-}
-
-class LocationsScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Second Screen'),
-      ),
-      body: Center(
-        child: Text('Bem-vindo à tela de locais, betinha'),
       ),
     );
   }
